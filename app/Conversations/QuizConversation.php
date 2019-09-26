@@ -59,18 +59,44 @@ class QuizConversation extends Conversation
 
 		private function askQuestion(Question $question)
 		{
-			$questionTemplate = BotManQuestion::create($question->text);
 			
-			foreach($question->answers->shuffle() as $answer){
-				$questionTemplate->addButton(Button::create($answer->text)->value($answer->id));
-			}
-			$this->ask($questionTemplate, function(BotManAnswer $answer) use ($question) {
+			$this->ask(createQuestionTemplate($questionTemplate), function(BotManAnswer $answer) use ($question) {
+
+				$quizAnswer = Answer::find($answer->getValue());
+
+				if(!$quizAnswer){
+					$this->say('Sorry, I did not get that. Please use the buttons.');
+					return $this->checkForNextQuestion();
+				}
 
 				$this->quizQuestions->forget($question->id);//remove question from collection
+
+				if($quizAnswer->correct_one){
+					$this->userPoints += $question->points;
+					$this->userCorrectAnswers++;
+					$answerResult = '✅';
+				}else{
+					$correctAnswer = $question->answers()->where('correct_one', true)->first()->text;
+					$answerResult = "❌ (Correct: {$correctAnswer})";
+				}
+				$this->currentQuestion++;
 				
+				$this->say("Your answer: {$quizAnswer->text} {$answerResult}");
+
 				$this->checkForNextQuestion();
 			});
 
+		}
+
+		private function createQuestionTemplate(Question $question)
+		{
+			$questionText = '➡️ Question: '.$this->currentQuestion.' / '.$this->questionCount.' : '.$question->text;
+			$questionTemplate = BotManQuestion::create($questionText);
+
+			foreach($question->answers->shuffle() as $answer){
+				$questionTemplate->addButton(Button::create($answer->text)->value($answer->id));
+			}
+			return $questionTemplate;
 
 		}
 
