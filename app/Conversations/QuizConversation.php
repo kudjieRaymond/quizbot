@@ -9,7 +9,7 @@ use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\BotMan\Messages\Conversations\Conversation;
 use App\Question;
 use App\Answer;
-
+use App\Highscore;
 class QuizConversation extends Conversation
 {
 	
@@ -39,13 +39,15 @@ class QuizConversation extends Conversation
     {
 			$this->questionCount = Question::count();
 			$this->quizQuestions = Question::all()->shuffle()->keyBy('id');
-        $this->intro();
+
+      $this->intro();
 		}
 
 		public function intro()
 		{	
 
 			$this->say('You will be shown '.$this->questionCount.' questions about General Knowledge. You will be rewarded with a certain amount of point for every correct answer . Please keep it fair, and don\'t use any help. All the best! 🍀');
+
 			$this->checkForNextQuestion();
 		}
 
@@ -60,7 +62,7 @@ class QuizConversation extends Conversation
 		private function askQuestion(Question $question)
 		{
 			
-			$this->ask(createQuestionTemplate($questionTemplate), function(BotManAnswer $answer) use ($question) {
+			$this->ask($this->createQuestionTemplate($question), function(BotManAnswer $answer) use ($question) {
 
 				$quizAnswer = Answer::find($answer->getValue());
 
@@ -104,5 +106,32 @@ class QuizConversation extends Conversation
 		{
 			$this->say('Finished 🏁');
 			$this->say("You made it through all the questions. You reached {$this->userPoints} points! Correct answers: {$this->userCorrectAnswers} / {$this->questionCount}");
+
+			$this->askAboutHighscore();
+		}
+
+		private function askAboutHighscore()
+		{
+			$question = BotManQuestion::create('Do you want to get added to the highscore list? Only your latest result will be saved. To achieve that, we need to store your name and chat id.')->addButtons([
+											Button::create('Yes')->value('yes'),
+										  Button::create('No')->value('no')]);
+			
+			$this->ask($question, function(BotManAnswer $answer){
+
+				if($answer->getValue() == 'yes'){
+
+					$user = Highscore::saveUser($this->bot->getUser(), $this->userPoints, $this->userCorrectAnswers);
+					$this->say("Done. Your rank is {$user->rank}.");
+					return $this->bot->startConversation(new HighscoreConversation());
+
+				}else if($answer->getValue() == 'no'){
+					
+					return $this->say('Not problem. You were not added to the highscore. Still you can tell your friends about it 😉');
+
+				}else{
+					
+					return $this->repeat('Sorry, I did not get that. Please use the buttons.');
+				}
+			});
 		}
 }
