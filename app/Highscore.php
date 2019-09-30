@@ -27,7 +27,7 @@ class Highscore extends Model
 		return $user;
 	}
 
-	public function getRank()
+	public function getRankAttribute()
 	{
     return static::query()->where('points', '>', $this->points)->pluck('points')->unique()->count() + 1;
 	}
