@@ -4,7 +4,7 @@
 ## About Quizbot Studio
 This project is a Chat bot that integrates with Telegram App and is built using  [http://botman.io](http://botman.io)
 
-
+![QuizBot Demo](https://media.giphy.com/media/UqkrhUshRXLkR0eNh3/giphy.gif)
 ## SetUp
 
 	Clone this project on to your local Machine

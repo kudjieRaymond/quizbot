@@ -22,7 +22,7 @@ class WelcomeConversation extends Conversation
 
 		private function welcomeUser()
 		{
-			$this->say('Hey'. $this->bot->getUser()->getFirstName() . ' 👋');
+			$this->say('Hey '. $this->bot->getUser()->getFirstName() . ' 👋');
 			$this->askIfReady();
 		}
 
